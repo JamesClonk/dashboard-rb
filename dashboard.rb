@@ -1,7 +1,6 @@
 require 'sinatra'
 require "sinatra/reloader" if development?
-require 'json'
-require 'socket'
+Dir[File.dirname(__FILE__) + '/*.rb'].each {|file| require file}
 
 set :public_folder, File.dirname(__FILE__) + '/assets'
 set :views, settings.root + '/templates'
@@ -11,22 +10,36 @@ get '/' do
 	erb :index
 end
 
-get '/api/hostname' do
-	content_type 'application/json'
-	hostname = {:Hostname => Socket.gethostname}
-	#JSON.generate(hostname)
-	hostname.to_json
+get '/api/:method' do
+	data_handler(params[:method])
 end
 
-get '/api/ip' do
+def data_handler(method)
 	content_type 'application/json'
-	ips = Array.new
-	Socket.ip_address_list.each do |addr_info|
-	 	if addr_info.ipv4? and !addr_info.ipv4_loopback? and !addr_info.ipv4_multicast?
-	 		ips.push(addr_info.ip_address)
-	 	end
+	case method
+	when "hostname"
+		hostname
+	when "ip"
+		ip_addresses
+	when "cpu"
+		cpu
+	when "mem"
+		mem
+	when "disk"
+		df
+	when "processes"
+		top
+	when "top"
+		top
+	when "logged_on"
+		logged_on
+	when "users"
+		passwd
+	when "network"
+		network
+	else
+		"{}"
 	end
-	ips.to_json
 end
 
 not_found do
